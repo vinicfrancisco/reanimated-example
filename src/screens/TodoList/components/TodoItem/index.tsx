@@ -34,6 +34,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: TODO_ITEM_HEIGHT,
     padding: 8,
+    marginVertical: 4,
+    marginHorizontal: 16,
   },
   title: {
     flex: 1,

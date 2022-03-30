@@ -1,45 +1,25 @@
-import React, {Children, useMemo, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
-  ScrollView,
+  FlatList,
+  ListRenderItemInfo,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {useSharedValue} from 'react-native-reanimated';
 import uuid from 'react-native-uuid';
-import MovableTodoItem from './components/MovableTodoItem';
-import {TodoItem} from './components/TodoItem';
+import TodoItemComponent, {TodoItem} from './components/TodoItem';
 
 function TodoList() {
   const [todoList, setTodoList] = useState<TodoItem[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
 
-  const idIndexObject = useMemo(() => {
-    const values = Object.values(todoList);
-    const object: {[key: string]: number} = {};
-
-    for (let i = 0; i < values.length; i++) {
-      object[values[i].id] = i;
-    }
-
-    return object;
-  }, [todoList]);
-
-  const positions = useSharedValue(idIndexObject);
-
   const addToList = () => {
-    const id = String(uuid.v4());
-    const newIndex = todoList.length;
-
-    setTodoList(state => [...state, {title: inputValue, id, done: false}]);
-
-    positions.value = {
-      ...positions.value,
-      [id]: newIndex,
-    };
-
+    setTodoList(state => [
+      ...state,
+      {title: inputValue, id: String(uuid.v4()), done: false},
+    ]);
     setInputValue('');
   };
 
@@ -58,6 +38,13 @@ function TodoList() {
     );
   };
 
+  const renderItem = useCallback(
+    ({item}: ListRenderItemInfo<TodoItem>) => (
+      <TodoItemComponent data={item} onMarkAsDone={() => markAsDone(item.id)} />
+    ),
+    [],
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -74,18 +61,11 @@ function TodoList() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.container}>
-        {Children.toArray(
-          todoList.map(item => (
-            <MovableTodoItem
-              data={item}
-              positions={positions}
-              totalLength={todoList.length}
-              onMarkAsDone={() => markAsDone(item.id)}
-            />
-          )),
-        )}
-      </ScrollView>
+      <FlatList
+        data={todoList}
+        keyExtractor={item => item.id}
+        renderItem={renderItem}
+      />
     </View>
   );
 }
